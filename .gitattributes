@@ -1,0 +1,16 @@
+# Keep line endings consistent: the site is authored on Windows but built
+# on Linux by GitHub Actions. Without this, core.autocrlf can cause churn
+# and platform-dependent output.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

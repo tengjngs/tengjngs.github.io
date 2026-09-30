@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RC滤波器计算工具</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft YaHei', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            padding-top: 60px;
+            color: #333;
+        }
+        .container {
+            background: white;
+            width: 680px;
+            padding: 40px 50px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-bottom: 25px;
+        }
+        .radio-group label {
+            cursor: pointer;
+            color: #666;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #2ecc71; /* 绿色强调色 */
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        /* 输入/结果行通用样式 */
+        .input-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 42px;
+            position: relative;
+        }
+        /* 标签列 */
+        .input-label {
+            background: #fdfdfd;
+            padding: 0 15px;
+            width: 120px;
+            color: #666;
+            font-size: 14px;
+            border-right: 1px solid #ddd;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        /* 输入框 */
+        .input-field {
+            flex: 1;
+            border: none;
+            padding: 0 15px;
+            outline: none;
+            font-size: 15px;
+            color: #333;
+            height: 100%;
+        }
+        .input-field:read-only {
+            background-color: #fafafa;
+            color: #555;
+        }
+        /* 下拉框 */
+        .unit-select {
+            border: none;
+            border-left: 1px solid #ddd;
+            padding: 0 15px;
+            background: #fdfdfd;
+            outline: none;
+            color: #666;
+            font-size: 14px;
+            height: 100%;
+            cursor: pointer;
+            appearance: none;
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        /* 计算按钮 */
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .calc-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 0 40px;
+            height: 40px;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .calc-btn:hover {
+            background-color: #1976D2;
+        }
+        .calc-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        /* 结果框 (红色虚线) */
+        .result-box {
+            margin-top: 30px;
+            border: 1px dashed #e74c3c;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            border-radius: 2px;
+            height: 42px;
+            background-color: #fff;
+        }
+        .result-box .input-label {
+            border-right: none;
+            background: transparent;
+            justify-content: flex-end;
+            color: #333;
+        }
+        .result-box .input-field {
+            text-align: left;
+            padding-left: 10px;
+            background: transparent;
+            font-weight: normal;
+        }
+        .result-box .unit-select {
+            background: transparent;
+        }
+
+        /* 隐藏状态 */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 蓝色小提示文字 */
+        .hint-text {
+            color: #2196F3;
+            font-size: 12px;
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            display: none;
+        }
+        .input-row:focus-within .hint-text {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>RC滤波器计算工具</h2>
+
+    <!-- 模式选择 -->
+    <div class="radio-group">
+        <label><input type="radio" name="calcMode" value="f" onchange="switchMode('f')" checked> 算截止频率</label>
+        <label><input type="radio" name="calcMode" value="c" onchange="switchMode('c')"> 算电容值</label>
+        <label><input type="radio" name="calcMode" value="r" onchange="switchMode('r')"> 算电阻值</label>
+    </div>
+
+    <!-- 动态输入区域 -->
+    <!-- 1. 电容输入框 -->
+    <div class="input-row" id="row-c">
+        <div class="hint-text">电容的容量值</div>
+        <div class="input-label" id="label-c">电容容值(C)</div>
+        <input type="number" class="input-field" id="val-c" placeholder="请输入电容值" value="10">
+        <select class="unit-select" id="unit-c">
+            <option value="1e-12">pF</option>
+            <option value="1e-9">nF</option>
+            <option value="1e-6">uF</option>
+            <option value="1e-3">mF</option>
+            <option value="1">F</option>
+        </select>
+    </div>
+
+    <!-- 2. 电阻输入框 -->
+    <div class="input-row" id="row-r">
+        <div class="hint-text">电阻的阻值</div>
+        <div class="input-label" id="label-r">电阻阻值(R)</div>
+        <input type="number" class="input-field" id="val-r" placeholder="请输入电阻值" value="50">
+        <select class="unit-select" id="unit-r">
+            <option value="1">Ω</option>
+            <option value="1e3">kΩ</option>
+            <option value="1e6">MΩ</option>
+        </select>
+    </div>
+
+    <!-- 3. 频率输入框 (在算频率模式下隐藏，在算C/R时显示) -->
+    <div class="input-row hidden" id="row-f">
+        <div class="hint-text">滤波器截止频率</div>
+        <div class="input-label">截止频率(F)</div>
+        <input type="number" class="input-field" id="val-f" placeholder="请输入频率" value="318.3098861837906">
+        <select class="unit-select" id="unit-f">
+            <option value="1">Hz</option>
+            <option value="1e3">kHz</option>
+            <option value="1e6" selected>MHz</option>
+        </select>
+    </div>
+
+    <!-- 计算按钮 -->
+    <div class="btn-container">
+        <button class="calc-btn" onclick="calculate()">
+            获取计算结果 
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+    </div>
+
+    <!-- 动态结果区域 (红色虚线框) -->
+    <div class="result-box">
+        <div class="input-label" id="res-label">截止频率:</div>
+        <input type="text" class="input-field" id="res-val" readonly>
+        <select class="unit-select" id="res-unit">
+            <option value="1">Hz</option>
+            <option value="1e3">kHz</option>
+            <option value="1e6" selected>MHz</option>
+        </select>
+    </div>
+</div>
+
+<script>
+    // 模式切换逻辑
+    function switchMode(mode) {
+        const rowC = document.getElementById('row-c');
+        const rowR = document.getElementById('row-r');
+        const rowF = document.getElementById('row-f');
+        const resLabel = document.getElementById('res-label');
+        const resUnit = document.getElementById('res-unit');
+        const resVal = document.getElementById('res-val');
+
+        // 每次切换模式，重置结果和输入框
+        resVal.value = '';
+        document.getElementById('val-c').value = '';
+        document.getElementById('val-r').value = '';
+        document.getElementById('val-f').value = '';
+
+        if (mode === 'f') {
+            // 算频率：显示 C 和 R 输入框，隐藏 F 输入框
+            rowC.classList.remove('hidden');
+            rowR.classList.remove('hidden');
+            rowF.classList.add('hidden');
+
+            resLabel.innerText = '截止频率:';
+            resUnit.innerHTML = '<option value="1">Hz</option><option value="1e3">kHz</option><option value="1e6" selected>MHz</option>';
+            
+            // 填入示例数据方便测试
+            document.getElementById('val-c').value = '10';
+            document.getElementById('unit-c').value = '1e-12';
+            document.getElementById('val-r').value = '50';
+            document.getElementById('unit-r').value = '1';
+            
+        } else if (mode === 'c') {
+            // 算电容：隐藏 C 输入框，显示 R 和 F 输入框
+            rowC.classList.add('hidden');
+            rowR.classList.remove('hidden');
+            rowF.classList.remove('hidden');
+
+            resLabel.innerText = '电容容值:';
+            resUnit.innerHTML = '<option value="1e-12" selected>pF</option><option value="1e-9">nF</option><option value="1e-6">uF</option>';
+            
+            // 填入示例数据
+            document.getElementById('val-r').value = '50';
+            document.getElementById('unit-r').value = '1';
+            document.getElementById('val-f').value = '318.3098861837906';
+            document.getElementById('unit-f').value = '1e6';
+            
+        } else if (mode === 'r') {
+            // 算电阻：隐藏 R 输入框，显示 C 和 F 输入框
+            rowC.classList.remove('hidden');
+            rowR.classList.add('hidden');
+            rowF.classList.remove('hidden');
+
+            resLabel.innerText = '电阻阻值:';
+            resUnit.innerHTML = '<option value="1" selected>Ω</option><option value="1e3">kΩ</option><option value="1e6">MΩ</option>';
+            
+            // 填入示例数据
+            document.getElementById('val-c').value = '10.000000000000002';
+            document.getElementById('unit-c').value = '1e-12';
+            document.getElementById('val-f').value = '318.3098861837906';
+            document.getElementById('unit-f').value = '1e6';
+        }
+    }
+
+    // 计算主函数
+    function calculate() {
+        const mode = document.querySelector('input[name="calcMode"]:checked').value;
+        const resVal = document.getElementById('res-val');
+        const resUnit = document.getElementById('res-unit');
+
+        if (mode === 'f') {
+            // f = 1 / (2 * PI * R * C)
+            let C = parseFloat(document.getElementById('val-c').value) * parseFloat(document.getElementById('unit-c').value);
+            let R = parseFloat(document.getElementById('val-r').value) * parseFloat(document.getElementById('unit-r').value);
+            
+            if (isNaN(C) || isNaN(R) || C <= 0 || R <= 0) {
+                alert("请输入有效的电容和电阻值！");
+                return;
+            }
+            let f = 1 / (2 * Math.PI * R * C);
+            // 将结果转换为选中的单位
+            let displayUnit = parseFloat(resUnit.value);
+            resVal.value = (f / displayUnit).toFixed(6);
+            
+        } else if (mode === 'c') {
+            // C = 1 / (2 * PI * f * R)
+            let R = parseFloat(document.getElementById('val-r').value) * parseFloat(document.getElementById('unit-r').value);
+            let f = parseFloat(document.getElementById('val-f').value) * parseFloat(document.getElementById('unit-f').value);
+            
+            if (isNaN(f) || isNaN(R) || f <= 0 || R <= 0) {
+                alert("请输入有效的电阻和频率值！");
+                return;
+            }
+            let C = 1 / (2 * Math.PI * f * R);
+            let displayUnit = parseFloat(resUnit.value);
+            resVal.value = (C / displayUnit).toFixed(6);
+            
+        } else if (mode === 'r') {
+            // R = 1 / (2 * PI * f * C)
+            let C = parseFloat(document.getElementById('val-c').value) * parseFloat(document.getElementById('unit-c').value);
+            let f = parseFloat(document.getElementById('val-f').value) * parseFloat(document.getElementById('unit-f').value);
+            
+            if (isNaN(C) || isNaN(f) || C <= 0 || f <= 0) {
+                alert("请输入有效的电容和频率值！");
+                return;
+            }
+            let R = 1 / (2 * Math.PI * f * C);
+            let displayUnit = parseFloat(resUnit.value);
+            resVal.value = (R / displayUnit).toFixed(6);
+        }
+    }
+
+    // 页面加载完成后，初始化一次状态
+    window.onload = () => {
+        switchMode('f');
+    };
+</script>
+</body>
+</html>

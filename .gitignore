@@ -1,0 +1,15 @@
+# ---- Hexo ----
+db.json
+public/
+.deploy_git/
+.deploy*/
+*.log
+
+# ---- Node ----
+node_modules/
+
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*~
